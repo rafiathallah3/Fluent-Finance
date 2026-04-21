@@ -1,50 +1,87 @@
-# Welcome to your Expo app 👋
+# Fluent Finance 💹
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A premium, interactive financial literacy mobile application built with **Expo** and **React Native**. Fluent Finance aims to bridge the gap between complex financial markets and everyday understanding through real-time data, sandbox environments, and contextual educational scaffolding.
 
-## Get started
+## 🚀 Key Features
 
-1. Install dependencies
+### 🧪 Money Lab
+A dedicated sandbox environment where users can practice financial management without real-world consequences.
+- **Dynamic Budgeting**: Interactive sliders for income and savings targets with real-time visual feedback on expense ratios.
+- **Paper Trading**: Buy and sell assets (e.g., Bitcoin) using a virtual cash balance to understand market dynamics.
 
+### 📊 Real-time Market Data & Charts
+- **Interactive Candlestick Charts**: Powered by `react-native-wagmi-charts`, providing a professional-grade trading visualization experience.
+- **Live Price Updates**: Real-time asset price tracking and portfolio valuation.
+- **Portfolio Tracking**: Holistic view of total wealth, cash balance, and unrealized P&L across all positions.
+
+### 🎓 Educational Scaffolding
+- **Contextual Tooltips**: Immediate explanations of complex financial terms (e.g., "Market Order", "Unrealized P&L") right where they appear.
+- **Visual Metaphors**: Simplified visual representations of financial health to make abstract concepts intuitive.
+- **Journey Tracking**: A structured roadmap for users to progress from financial basics to advanced investing.
+
+### 🔍 Research Telemetry
+Integrated telemetry system to evaluate the effectiveness of contextual scaffolding in financial education.
+- Tracks tool-tip engagement and trading behavior.
+- Provides data-driven insights into how users learn and interact with financial tools.
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Expo](https://expo.dev/) (React Native)
+- **Routing**: [Expo Router](https://docs.expo.dev/router/introduction/) (Link-based navigation)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **Charts**: [React Native Wagmi Charts](https://github.com/coinjar/react-native-wagmi-charts)
+- **Animations**: [React Native Reanimated](https://docs.expo.dev/versions/latest/sdk/reanimated/)
+- **Icons**: [Lucide React Native](https://lucide.dev/guide/packages/lucide-react-native)
+- **Theming**: Premium dark-mode UI with consistent design tokens.
+
+## 📦 Getting Started
+
+### Prerequisites
+- Node.js (Late LTS)
+- npm or yarn
+- Expo Go app on your mobile device (optional, for physical device testing)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd FluentFinance
+   ```
+
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. Start the app
-
+3. **Start the development server**
    ```bash
-   npx expo start
+   npm start
    ```
 
-In the output, you'll find options to open the app in a
+- Press **`a`** for Android emulator.
+- Press **`i`** for iOS simulator.
+- Press **`w`** for web version.
+- Scan the QR code with the **Expo Go** app to run on a physical device.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 📂 Project Structure
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+FluentFinance/
+├── app/                # Expo Router pages
+│   ├── (tabs)/         # Main tab-based navigation
+│   │   ├── index.tsx   # Portfolio Overview
+│   │   ├── lab.tsx     # Money Lab (Budgeting & Investing)
+│   │   └── market.tsx  # Market Insights
+│   └── asset/          # Detailed asset views
+├── components/         # Reusable UI components
+│   ├── RealtimeChart.tsx
+│   └── ContextualTooltip.tsx
+├── store/              # Zustand global state (Trading, UI)
+├── hooks/              # Custom hooks (Theming, Layout)
+├── utils/              # Helper functions & Telemetry
+└── assets/             # Images, fonts, and static resources
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
