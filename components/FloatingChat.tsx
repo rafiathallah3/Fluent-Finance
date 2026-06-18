@@ -203,9 +203,9 @@ export function FloatingChat() {
 
   const buttonPanResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 2 || Math.abs(gestureState.dy) > 2;
+        return Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3;
       },
       onPanResponderGrant: () => {
         pan.setOffset({
@@ -220,10 +220,6 @@ export function FloatingChat() {
       ),
       onPanResponderRelease: (_, gestureState) => {
         pan.flattenOffset();
-        if (Math.abs(gestureState.dx) < 8 && Math.abs(gestureState.dy) < 8) {
-          setIsOpen(true);
-          return;
-        }
 
         const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
         const buttonSize = 54;
@@ -374,6 +370,7 @@ export function FloatingChat() {
       >
         <TouchableOpacity
           activeOpacity={0.85}
+          onPress={() => setIsOpen(true)}
           style={[styles.chatButtonContainer, { shadowColor: currentTheme.primary }]}
         >
           <LinearGradient
