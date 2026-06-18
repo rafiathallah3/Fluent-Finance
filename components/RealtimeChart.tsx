@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
 import { CandlestickChart } from 'react-native-wagmi-charts';
 import { useTradingStore } from '../store/useTradingStore';
+import { CustomText as Text } from './CustomText';
 
 const { width } = Dimensions.get('window');
 const CHART_WIDTH = width - 48;
@@ -18,13 +19,22 @@ interface OHLCData {
 export default function RealtimeChart() {
   const [dataPoints, setDataPoints] = useState<OHLCData[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const updateMarketPrice = useTradingStore((state) => state.updateMarketPrice);
 
   useEffect(() => {
+    const API_KEY = process.env.EXPO_PUBLIC_COINGECKO_KEY || '';
+
     const fetchHistory = async () => {
       try {
-        const response = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=1');
+        const response = await fetch(
+          'https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=1',
+          {
+            headers: API_KEY
+              ? { 'x-cg-demo-api-key': API_KEY }
+              : {},
+          }
+        );
         const rawData = await response.json();
 
         if (Array.isArray(rawData) && rawData.length > 0) {
@@ -37,7 +47,7 @@ export default function RealtimeChart() {
           }));
 
           setDataPoints(formattedData);
-          
+
           const initialCurrentPrice = formattedData[formattedData.length - 1].close;
           updateMarketPrice('BTC', initialCurrentPrice);
         }
@@ -49,10 +59,9 @@ export default function RealtimeChart() {
     };
 
     fetchHistory();
-    
-    // Poll the CoinGecko API every 10 seconds for real-time updates
-    const intervalId = setInterval(fetchHistory, 10000);
-    
+
+    const intervalId = setInterval(fetchHistory, 30000);
+
     return () => clearInterval(intervalId);
   }, [updateMarketPrice]);
 
@@ -90,16 +99,16 @@ export default function RealtimeChart() {
         <View style={styles.chartWrapper}>
           {/* Background Grid Layer */}
           <View style={styles.gridContainer} pointerEvents="none">
-             {gridLines}
+            {gridLines}
           </View>
 
           {/* Dotted Price Line Overlay */}
           <View style={[styles.priceOverlayLine, { top: priceLineTop }]} pointerEvents="none">
-             <View style={styles.priceOverlayLabelBox}>
-               <Text style={styles.priceOverlayLabelText}>
-                  ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-               </Text>
-             </View>
+            <View style={styles.priceOverlayLabelBox}>
+              <Text style={styles.priceOverlayLabelText}>
+                ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </Text>
+            </View>
           </View>
 
           {/* The Wagmi Candlestick Chart */}
@@ -139,7 +148,7 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     marginVertical: 16,
-    backgroundColor: '#0d1729ff', 
+    backgroundColor: '#0d1729ff',
     paddingVertical: 10,
     borderRadius: 8,
   },
@@ -150,7 +159,7 @@ const styles = StyleSheet.create({
   gridContainer: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'space-between',
-    zIndex: -1, 
+    zIndex: -1,
   },
   gridLine: {
     width: '100%',

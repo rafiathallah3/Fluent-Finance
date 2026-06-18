@@ -2,12 +2,27 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+/** Round to N decimal places to avoid IEEE 754 artifacts (e.g. 0.1+0.2 = 0.30000000000000004) */
+const roundDecimal = (n: number, dp = 8): number => Math.round(n * 10 ** dp) / 10 ** dp;
+
+const DEFAULT_CASH_BALANCE = 10000;
+
 export interface Holding {
   quantity: number;
   averageCost: number;
 }
 
 export type Portfolio = Record<string, Holding>;
+
+export interface Transaction {
+  id: string;
+  type: 'BUY' | 'SELL';
+  symbol: string;
+  quantity: number;
+  price: number;
+  totalCost: number;
+  date: string;
+}
 
 export interface Snapshot {
   timestamp: string;
@@ -20,6 +35,7 @@ interface TradingState {
   unrealizedPnL: number;
   marketPrices: Record<string, number>; 
   snapshots: Snapshot[];
+  transactionHistory: Transaction[];
   
   // Actions
   updateMarketPrice: (symbol: string, price: number) => void;
@@ -28,16 +44,18 @@ interface TradingState {
   calculatePnL: () => void;
   takeSnapshot: () => void;
   getPortfolioDelta: () => number;
+  resetAccount: (startingBalance?: number) => void;
 }
 
 export const useTradingStore = create<TradingState>()(
   persist(
     (set, get) => ({
-      cashBalance: 10000, // Start with $10,000 for paper trading
+      cashBalance: DEFAULT_CASH_BALANCE, // Start with $10,000 for paper trading
       portfolio: {},
       unrealizedPnL: 0,
       marketPrices: {},
       snapshots: [],
+      transactionHistory: [],
 
       takeSnapshot: () => {
         const { cashBalance, portfolio, marketPrices, snapshots } = get();
@@ -80,7 +98,7 @@ export const useTradingStore = create<TradingState>()(
       },
 
       buyAsset: (symbol, quantity, price) => {
-        const cost = quantity * price;
+        const cost = roundDecimal(quantity * price);
         const { cashBalance, portfolio, takeSnapshot } = get();
         
         if (cashBalance < cost) {
@@ -88,12 +106,22 @@ export const useTradingStore = create<TradingState>()(
         }
 
         const existingHolding = portfolio[symbol] || { quantity: 0, averageCost: 0 };
-        const totalCost = existingHolding.quantity * existingHolding.averageCost + cost;
-        const newQuantity = existingHolding.quantity + quantity;
-        const newAverageCost = totalCost / newQuantity;
+        const totalCost = roundDecimal(existingHolding.quantity * existingHolding.averageCost + cost);
+        const newQuantity = roundDecimal(existingHolding.quantity + quantity);
+        const newAverageCost = roundDecimal(totalCost / newQuantity);
+
+        const transaction: Transaction = {
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+          type: 'BUY',
+          symbol,
+          quantity,
+          price,
+          totalCost: cost,
+          date: new Date().toISOString(),
+        };
 
         set((state) => ({
-          cashBalance: state.cashBalance - cost,
+          cashBalance: roundDecimal(state.cashBalance - cost),
           portfolio: {
             ...state.portfolio,
             [symbol]: {
@@ -101,6 +129,7 @@ export const useTradingStore = create<TradingState>()(
               averageCost: newAverageCost,
             },
           },
+          transactionHistory: [transaction, ...state.transactionHistory],
         }));
 
         get().calculatePnL();
@@ -116,10 +145,20 @@ export const useTradingStore = create<TradingState>()(
           return false; // Insufficient assets
         }
 
-        const revenue = quantity * price;
+        const revenue = roundDecimal(quantity * price);
+
+        const transaction: Transaction = {
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+          type: 'SELL',
+          symbol,
+          quantity,
+          price,
+          totalCost: revenue,
+          date: new Date().toISOString(),
+        };
 
         set((state) => {
-          const newQuantity = holding.quantity - quantity;
+          const newQuantity = roundDecimal(holding.quantity - quantity);
           const newPortfolio = { ...state.portfolio };
 
           if (newQuantity === 0) {
@@ -132,8 +171,9 @@ export const useTradingStore = create<TradingState>()(
           }
 
           return {
-            cashBalance: state.cashBalance + revenue,
+            cashBalance: roundDecimal(state.cashBalance + revenue),
             portfolio: newPortfolio,
+            transactionHistory: [transaction, ...state.transactionHistory],
           };
         });
 
@@ -151,7 +191,17 @@ export const useTradingStore = create<TradingState>()(
               pnl += (currentPrice - holding.averageCost) * holding.quantity;
             }
           });
-          return { unrealizedPnL: pnl };
+          return { unrealizedPnL: roundDecimal(pnl) };
+        });
+      },
+
+      resetAccount: (startingBalance?: number) => {
+        set({
+          cashBalance: startingBalance ?? DEFAULT_CASH_BALANCE,
+          portfolio: {},
+          unrealizedPnL: 0,
+          snapshots: [],
+          transactionHistory: [],
         });
       },
     }),
@@ -161,7 +211,9 @@ export const useTradingStore = create<TradingState>()(
       partialize: (state) => ({ 
         cashBalance: state.cashBalance, 
         portfolio: state.portfolio,
-        snapshots: state.snapshots
+        snapshots: state.snapshots,
+        transactionHistory: state.transactionHistory,
+        marketPrices: state.marketPrices,
       }),
     }
   )

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Modal, TouchableWithoutFeedback } from 'react-native';
+import { View, StyleSheet, Pressable, Modal, TouchableWithoutFeedback } from 'react-native';
+import { CustomText as Text } from './CustomText';
 import Animated, { FadeIn, FadeOut, SlideInDown } from 'react-native-reanimated';
 import { Pin } from 'lucide-react-native';
 

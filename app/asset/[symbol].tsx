@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
+import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
+import { CustomText as Text } from '../../components/CustomText';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useTradingStore } from '../../store/useTradingStore';
 import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react-native';

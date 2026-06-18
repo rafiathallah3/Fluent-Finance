@@ -1,18 +1,30 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native';
-import { Flame, LineChart as ChartIcon, CheckSquare, ChevronDown, ChevronUp, Wallet, TrendingUp, TrendingDown } from 'lucide-react-native';
-import VisualMetaphors from '../../components/VisualMetaphors';
-import RealtimeChart from '../../components/RealtimeChart';
-import ContextualTooltip from '../../components/ContextualTooltip';
-import { useTradingStore } from '../../store/useTradingStore';
 import Slider from '@react-native-community/slider';
+import { ArrowDownRight, ArrowUpRight, Clock, LineChart as ChartIcon, CheckSquare, ChevronDown, ChevronUp, Flame, TrendingDown, TrendingUp, Wallet } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { Alert, SafeAreaView, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import ContextualTooltip from '../../../components/ContextualTooltip';
+import { CustomText as Text } from '../../../components/CustomText';
+import RealtimeChart from '../../../components/RealtimeChart';
+import VisualMetaphors from '../../../components/VisualMetaphors';
+import { useTradingStore } from '../../../store/useTradingStore';
+import { useProgressStore } from '../../../store/useProgressStore';
+
+const formatDate = (isoString: string): string => {
+  const d = new Date(isoString);
+  return d.toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+  }) + ' ' + d.toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  });
+};
 
 export default function LabScreen() {
   const [activeTab, setActiveTab] = useState<'Budget' | 'Invest'>('Budget');
   const [monthlyIncome, setMonthlyIncome] = useState(3500000);
   const [savingsRate, setSavingsRate] = useState(20);
   const [isPortfolioExpanded, setIsPortfolioExpanded] = useState(false);
-  const { marketPrices, cashBalance, portfolio, unrealizedPnL, buyAsset, sellAsset, snapshots, getPortfolioDelta } = useTradingStore();
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+  const { marketPrices, cashBalance, portfolio, unrealizedPnL, buyAsset, sellAsset, snapshots, getPortfolioDelta, transactionHistory } = useTradingStore();
   const [quantityStr, setQuantityStr] = useState('0.1');
 
   // Calculate Aggregates
@@ -37,7 +49,8 @@ export default function LabScreen() {
     if (quantity <= 0) return;
     const success = buyAsset(symbol, quantity, currentPrice);
     if (success) {
-      Alert.alert('Trade Executed', `Bought ${quantity} ${symbol} for $${totalCost.toFixed(2)}`);
+      useProgressStore.getState().addXP(10);
+      Alert.alert('Trade Executed', `Bought ${quantity} ${symbol} for $${totalCost.toFixed(2)}\n+10 XP earned!`);
     } else {
       Alert.alert('Insufficient Funds', 'Not enough cash balance.');
     }
@@ -47,7 +60,8 @@ export default function LabScreen() {
     if (quantity <= 0) return;
     const success = sellAsset(symbol, quantity, currentPrice);
     if (success) {
-      Alert.alert('Trade Executed', `Sold ${quantity} ${symbol} for $${totalCost.toFixed(2)}`);
+      useProgressStore.getState().addXP(10);
+      Alert.alert('Trade Executed', `Sold ${quantity} ${symbol} for $${totalCost.toFixed(2)}\n+10 XP earned!`);
     } else {
       Alert.alert('Insufficient Assets', `Not enough ${symbol} to sell.`);
     }
@@ -86,9 +100,9 @@ export default function LabScreen() {
               </View>
             </View>
           </View>
-          
-          <TouchableOpacity 
-            style={styles.expandBtn} 
+
+          <TouchableOpacity
+            style={styles.expandBtn}
             onPress={() => setIsPortfolioExpanded(!isPortfolioExpanded)}
           >
             <Wallet size={14} color="#94a3b8" />
@@ -128,14 +142,14 @@ export default function LabScreen() {
         </View>
 
         <View style={styles.toggleContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.toggleBtn, activeTab === 'Budget' && styles.toggleActive]}
             onPress={() => setActiveTab('Budget')}
           >
             <Flame size={16} color={activeTab === 'Budget' ? "#ffffff" : "#94a3b8"} />
             <Text style={activeTab === 'Budget' ? styles.toggleTextActive : styles.toggleTextInActive}>Budget</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.toggleBtn, activeTab === 'Invest' && styles.toggleActive]}
             onPress={() => setActiveTab('Invest')}
           >
@@ -247,14 +261,14 @@ export default function LabScreen() {
                 <TouchableOpacity style={[styles.actionBtn, styles.buyBtn]} onPress={handleBuy}>
                   <Text style={styles.actionBtnText}>Buy {symbol}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.actionBtn, styles.sellBtn, (!holding || holding.quantity === 0) && styles.disabledBtn]} 
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.sellBtn, (!holding || holding.quantity === 0) && styles.disabledBtn]}
                   onPress={handleSell}
                 >
                   <Text style={styles.actionBtnText}>Sell {symbol}</Text>
                 </TouchableOpacity>
               </View>
-              
+
               {holding && holding.quantity > 0 && (
                 <View style={styles.holdingInfo}>
                   <Text style={styles.holdingSubText}>Holding {holding.quantity} BTC at Avg Cost: ${holding.averageCost.toLocaleString()}</Text>
@@ -272,6 +286,56 @@ export default function LabScreen() {
                 You are executing a Market Order.
               </ContextualTooltip>
             </View>
+
+            {/* Transaction History */}
+            <View style={styles.historySection}>
+              <TouchableOpacity
+                style={styles.historyExpandBtn}
+                onPress={() => setIsHistoryExpanded(!isHistoryExpanded)}
+              >
+                <Clock size={14} color="#94a3b8" />
+                <Text style={styles.historyExpandText}>
+                  {isHistoryExpanded ? 'Hide Transaction History' : 'View Transaction History'}
+                </Text>
+                <Text style={styles.historyBadge}>{transactionHistory.length}</Text>
+                {isHistoryExpanded ? <ChevronUp size={14} color="#94a3b8" /> : <ChevronDown size={14} color="#94a3b8" />}
+              </TouchableOpacity>
+
+              {isHistoryExpanded && (
+                <View style={styles.historyList}>
+                  {transactionHistory.length === 0 ? (
+                    <Text style={styles.emptyHistoryText}>No transactions yet. Make your first trade!</Text>
+                  ) : (
+                    transactionHistory.map((tx) => (
+                      <View key={tx.id} style={styles.historyRow}>
+                        <View style={styles.historyIconCol}>
+                          <View style={[styles.historyIcon, { backgroundColor: tx.type === 'BUY' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)' }]}>
+                            {tx.type === 'BUY'
+                              ? <ArrowUpRight size={16} color="#10b981" />
+                              : <ArrowDownRight size={16} color="#ef4444" />}
+                          </View>
+                        </View>
+                        <View style={styles.historyDetails}>
+                          <View style={styles.historyTopLine}>
+                            <Text style={styles.historySymbol}>{tx.symbol}</Text>
+                            <Text style={[styles.historyType, { color: tx.type === 'BUY' ? '#10b981' : '#ef4444' }]}>
+                              {tx.type === 'BUY' ? 'Buy' : 'Sell'}
+                            </Text>
+                          </View>
+                          <Text style={styles.historyQty}>{tx.quantity} {tx.symbol} @ ${tx.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                        </View>
+                        <View style={styles.historyRight}>
+                          <Text style={[styles.historyTotal, { color: tx.type === 'BUY' ? '#ef4444' : '#10b981' }]}>
+                            {tx.type === 'BUY' ? '-' : '+'}${tx.totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </Text>
+                          <Text style={styles.historyDate}>{formatDate(tx.date)}</Text>
+                        </View>
+                      </View>
+                    ))
+                  )}
+                </View>
+              )}
+            </View>
           </View>
         )}
       </ScrollView>
@@ -281,9 +345,9 @@ export default function LabScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#0b1626' },
-  container: { padding: 24, paddingTop: 48 },
+  container: { padding: 24, paddingTop: 24 },
   header: { marginBottom: 24 },
-  title: { fontSize: 32, fontWeight: '800', color: '#ffffff', fontFamily: 'serif', marginBottom: 8 },
+  title: { fontSize: 32, color: '#ffffff', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#64748b' },
   toggleContainer: {
     flexDirection: 'row',
@@ -450,4 +514,54 @@ const styles = StyleSheet.create({
   posQty: { color: '#64748b', fontSize: 12 },
   posValue: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
   posPnl: { fontSize: 12, fontWeight: '600' },
+  historySection: { marginTop: 24 },
+  historyExpandBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    backgroundColor: '#1e2f47',
+    borderRadius: 8,
+  },
+  historyExpandText: { color: '#94a3b8', fontSize: 13, fontWeight: '600' },
+  historyBadge: {
+    backgroundColor: '#334155',
+    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: '700',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  historyList: {
+    marginTop: 12,
+    gap: 8,
+  },
+  emptyHistoryText: { color: '#64748b', fontSize: 13, textAlign: 'center', fontStyle: 'italic', paddingVertical: 16 },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0f172a',
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  historyIconCol: { width: 36, alignItems: 'center' },
+  historyIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  historyDetails: { flex: 1 },
+  historyTopLine: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+  historySymbol: { color: '#e2e8f0', fontSize: 14, fontWeight: '700' },
+  historyType: { fontSize: 12, fontWeight: '600' },
+  historyQty: { color: '#64748b', fontSize: 12 },
+  historyRight: { alignItems: 'flex-end' },
+  historyTotal: { fontSize: 14, fontWeight: '700' },
+  historyDate: { color: '#475569', fontSize: 10, marginTop: 2 },
 });

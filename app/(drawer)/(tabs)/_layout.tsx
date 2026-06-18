@@ -1,24 +1,30 @@
 import { Tabs } from 'expo-router';
 import { Home, BookOpen, FlaskConical, LineChart, Map } from 'lucide-react-native';
-
 import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useThemeStore } from '../../../store/useThemeStore';
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const { currentTheme } = useThemeStore();
+  const bottomPadding = Platform.OS === 'android' ? Math.max(insets.bottom, 12) : 24;
+
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
+        headerShown: false, // The drawer will handle the header
         tabBarStyle: {
           backgroundColor: '#0b1626',
-          borderTopWidth: 0,
+          borderTopWidth: 1,
+          borderTopColor: '#1e293b',
           elevation: 0,
-          minHeight: Platform.OS === 'android' ? 64 : 80,
-          paddingBottom: Platform.OS === 'android' ? 12 : 24,
+          minHeight: (Platform.OS === 'android' ? 64 : 80) + bottomPadding,
+          paddingBottom: bottomPadding,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: '#0ea5e9',
+        tabBarActiveTintColor: currentTheme.primary,
         tabBarInactiveTintColor: '#64748b',
-        sceneStyle: { backgroundColor: '#0b1626' }, // For Expo Router v3+
+        sceneStyle: { backgroundColor: '#0f172a' },
       }}
     >
       <Tabs.Screen

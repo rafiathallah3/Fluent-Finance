@@ -1,16 +1,19 @@
+import { ArrowLeft, BookOpen, Calculator, CheckCircle, ChevronRight, Clock, CreditCard, LineChart, PieChart, Search, Shield, TrendingUp } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput, BackHandler } from 'react-native';
-import { Search, LineChart, Shield, Calculator, PieChart, ChevronRight, BookOpen, Clock, ArrowLeft, TrendingUp, CreditCard } from 'lucide-react-native';
+import { Alert, BackHandler, SafeAreaView, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Image } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { CustomText as Text } from '../../../components/CustomText';
+import { useProgressStore } from '../../../store/useProgressStore';
 
 const CATEGORIES = ['All', 'Investing', 'Trading', 'Budgeting'];
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#0b1626' },
-  container: { padding: 24, paddingTop: 48 },
+  container: { padding: 24, paddingTop: 24 },
   header: { marginBottom: 24 },
-  title: { fontSize: 32, fontWeight: '800', color: '#ffffff', fontFamily: 'serif', marginBottom: 8 },
+  title: { fontSize: 32, color: '#ffffff', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#64748b' },
-  
+
   // Library specific styles
   searchContainer: {
     flexDirection: 'row',
@@ -30,7 +33,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     height: '100%',
   },
-  
+
   categoriesWrapper: {
     marginHorizontal: -24,
     marginBottom: 24,
@@ -59,11 +62,11 @@ const styles = StyleSheet.create({
   categoryTextActive: {
     color: '#ffffff',
   },
-  
+
   lessonsList: { gap: 16 },
   emptyState: { paddingVertical: 40, alignItems: 'center' },
   emptyStateText: { color: '#64748b', fontSize: 15 },
-  
+
   lessonCard: {
     flexDirection: 'row',
     backgroundColor: '#142337',
@@ -129,6 +132,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 20,
   },
+  bannerImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 16,
+    marginTop: 24,
+  },
   readerHeroMeta: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -138,8 +147,6 @@ const styles = StyleSheet.create({
   readerTitle: {
     color: '#ffffff',
     fontSize: 32,
-    fontWeight: '800',
-    fontFamily: 'serif',
     lineHeight: 40,
   },
   articleBody: {
@@ -210,14 +217,15 @@ const LESSONS = [
     icon: PieChart,
     color: '#0ea5e9',
     bgColor: 'rgba(14, 165, 233, 0.1)',
+    image: require('../../../assets/images/banners/blue.png'),
     content: (
       <>
         <Text style={styles.paragraph}>Compound interest is the eighth wonder of the world. He who understands it, earns it; he who doesn't, pays it. But what exactly is it?</Text>
-        
+
         <Text style={styles.h2}>The Snowball Effect</Text>
         <Text style={styles.paragraph}>Imagine rolling a small snowball down a hill. As it rolls, it picks up more snow. The larger it gets, the more snow it picks up with each revolution. This is exactly how compound interest works.</Text>
         <Text style={styles.paragraph}>When you invest money, you earn interest. In the next period, you earn interest not only on your original investment (the principal) but also on the interest you earned previously.</Text>
-        
+
         <Text style={styles.h2}>A Real-World Example</Text>
         <Text style={styles.paragraph}>Let's say you invest $1,000 at a 10% annual return.</Text>
         <View style={styles.bulletList}>
@@ -239,10 +247,11 @@ const LESSONS = [
     icon: LineChart,
     color: '#f59e0b',
     bgColor: 'rgba(245, 158, 11, 0.1)',
+    image: require('../../../assets/images/banners/purple.png'),
     content: (
       <>
         <Text style={styles.paragraph}>Candlestick charts are standard across all major trading platforms. They provide a quick visual representation of market emotion over a specific timeframe (like 1 Day or 1 Hour).</Text>
-        
+
         <Text style={styles.h2}>The Anatomy of a Candle</Text>
         <Text style={styles.paragraph}>Each candle tells a short story of the battle between buyers (bulls) and sellers (bears). It contains 4 key price points, known as OHLC:</Text>
         <View style={styles.bulletList}>
@@ -251,10 +260,10 @@ const LESSONS = [
           <Text style={styles.bulletItem}>• <Text style={styles.bold}>Low:</Text> The lowest price reached during the period.</Text>
           <Text style={styles.bulletItem}>• <Text style={styles.bold}>Close:</Text> The final price at the end of the period.</Text>
         </View>
-        
+
         <Text style={styles.h2}>Green vs. Red</Text>
         <Text style={styles.paragraph}>If the <Text style={styles.bold}>Close</Text> is higher than the <Text style={styles.bold}>Open</Text>, the candle is green (bullish). Buyers pushed the price up and won the session!{"\n\n"}If the <Text style={styles.bold}>Close</Text> is lower than the <Text style={styles.bold}>Open</Text>, the candle is red (bearish). Sellers overwhelmed the buyers!</Text>
-        
+
         <Text style={styles.h2}>Wicks (or Shadows)</Text>
         <Text style={styles.paragraph}>The thin vertical lines above and below the solid body are the wicks. A very long wick at the bottom shows that sellers tried to push the price down, but buyers rejected it aggressively and drove the price back up.</Text>
       </>
@@ -270,16 +279,17 @@ const LESSONS = [
     icon: Shield,
     color: '#10b981',
     bgColor: 'rgba(16, 185, 129, 0.1)',
+    image: require('../../../assets/images/banners/green.png'),
     content: (
       <>
         <Text style={styles.paragraph}>An emergency fund is a bank account with money set aside exclusively to cover large, unexpected expenses. Think of it as a financial shock absorber.</Text>
-        
+
         <Text style={styles.h2}>Why do you need one?</Text>
         <Text style={styles.paragraph}>If all your money is tied up in stocks, a sudden emergency might force you to sell your investments at a loss just to get cash. An emergency fund protects your investments so they can continue to grow.</Text>
-        
+
         <Text style={styles.h2}>How much should you save?</Text>
         <Text style={styles.paragraph}>The golden rule is <Text style={styles.bold}>3 to 6 months of absolute basic living expenses</Text>. If your rent, groceries, and debt stringently total $2,000 a month, your emergency fund should be positioned between $6,000 and $12,000.</Text>
-        
+
         <Text style={styles.h2}>Where should you keep it?</Text>
         <Text style={styles.paragraph}>Not under your mattress, and certainly not in the stock market! Keep it in a <Text style={styles.bold}>High Yield Savings Account (HYSA)</Text>. It needs to be extremely liquid (easily accessible in hours) while still earning a little bit of interest to combat inflation safely.</Text>
       </>
@@ -295,16 +305,17 @@ const LESSONS = [
     icon: BookOpen,
     color: '#8b5cf6',
     bgColor: 'rgba(139, 92, 246, 0.1)',
+    image: require('../../../assets/images/banners/blue.png'),
     content: (
       <>
         <Text style={styles.paragraph}>Asset allocation is an investment strategy that aims to balance risk and reward. Simply put, it's how you slice your investment pie into different asset classes.</Text>
-        
+
         <Text style={styles.h2}>Don't Put All Your Eggs in One Basket</Text>
         <Text style={styles.paragraph}>Different assets behave differently in the market. When stocks go down, bonds often hold steady. By creatively mixing different asset classes (Stocks, Bonds, Real Estate, Cash, Crypto), you smooth out the bumpy ride of a volatile market.</Text>
-        
+
         <Text style={styles.h2}>The Classic 60/40 Portfolio</Text>
         <Text style={styles.paragraph}>Traditionally, financial advisors recommended holding <Text style={styles.bold}>60% stocks</Text> for rapid growth and <Text style={styles.bold}>40% bonds</Text> for safety and fixed income. While modern variations exist, the core concept remains: aggressively balance high-risk assets with deliberate, low-risk stabilizers.</Text>
-        
+
         <Text style={styles.h2}>Age-Based Allocation</Text>
         <Text style={styles.paragraph}>A common rule of thumb is "110 minus your age". If you are 30 years old, 110 - 30 = 80. You should theoretically hold 80% in aggressive stocks, and 20% in safe bonds. As you get closer to retirement, you predictably become more conservative to preserve capital.</Text>
       </>
@@ -320,16 +331,17 @@ const LESSONS = [
     icon: Calculator,
     color: '#ec4899',
     bgColor: 'rgba(236, 72, 153, 0.1)',
+    image: require('../../../assets/images/banners/green.png'),
     content: (
       <>
         <Text style={styles.paragraph}>Your Debt-to-Income (DTI) ratio is the percentage of your gross monthly income that goes toward paying your monthly debt payments. Lenders scrutinize this metric to determine your overall borrowing risk.</Text>
-        
+
         <Text style={styles.h2}>The Formula</Text>
         <View style={styles.mathBox}>
           <Text style={styles.mathText}>DTI = {"\n"}(Total Monthly Debt / Gross Monthly Income) × 100</Text>
         </View>
         <Text style={styles.paragraph}>For example, if you pay $1,500 for your mortgage, $200 for a car loan, and $300 for student loans, your monthly debt is $2,000. If your gross (before taxes) income is $6,000, your DTI is exactly 33.3%.</Text>
-        
+
         <Text style={styles.h2}>Why It Matters</Text>
         <Text style={styles.paragraph}>To secure an optimal mortgage rate, lenders generally want to see a DTI securely <Text style={styles.bold}>below 36%</Text>. If your DTI climbs to 43% or higher, it becomes an alarming "red flag". You will be viewed as a high-risk borrower—meaning getting loans will be difficult, and you will pay significantly higher interest rates.</Text>
       </>
@@ -345,20 +357,21 @@ const LESSONS = [
     icon: TrendingUp,
     color: '#22c55e',
     bgColor: 'rgba(34, 197, 94, 0.1)',
+    image: require('../../../assets/images/banners/purple.png'),
     content: (
       <>
         <Text style={styles.paragraph}>A "Bull Market" is a financial market condition where prices are rising or expected to rise. The term is most frequently used to refer to the stock market, but can be applied to anything that is traded, such as bonds, real estate, currencies, and commodities.</Text>
-        
+
         <Text style={styles.h2}>Why "Bull"?</Text>
         <Text style={styles.paragraph}>The term "bull" comes from the way the animal attacks its opponents. A bull thrusts its horns up into the air, symbolizing the upward movement of stock prices. Conversely, a "bear" swipes its paws down, representing a down market.</Text>
-        
+
         <Text style={styles.h2}>Key Characteristics</Text>
         <View style={styles.bulletList}>
           <Text style={styles.bulletItem}>• <Text style={styles.bold}>Rising Prices:</Text> Asset prices typically increase by 20% or more over a sustained period.</Text>
           <Text style={styles.bulletItem}>• <Text style={styles.bold}>Investor Optimism:</Text> High confidence leads to increased buying activity.</Text>
           <Text style={styles.bulletItem}>• <Text style={styles.bold}>Strong Economy:</Text> Often coincides with high GDP growth and low unemployment.</Text>
         </View>
-        
+
         <Text style={styles.h2}>How to Invest in a Bull Market</Text>
         <Text style={styles.paragraph}>Many investors follow a "buy and hold" strategy during bull markets. However, it's important to remember that bull markets don't last forever. Diversification remains key to protecting your portfolio when the cycle eventually turns.</Text>
       </>
@@ -374,10 +387,11 @@ const LESSONS = [
     icon: CreditCard,
     color: '#6366f1',
     bgColor: 'rgba(99, 102, 241, 0.1)',
+    image: require('../../../assets/images/banners/blue.png'),
     content: (
       <>
         <Text style={styles.paragraph}>Your credit score is a three-digit number that represents your "creditworthiness." It tells lenders how likely you are to pay back money you borrow. In the US, FICO scores are the most common, ranging from 300 to 850.</Text>
-        
+
         <Text style={styles.h2}>What Makes Up Your Score?</Text>
         <Text style={styles.paragraph}>Your score isn't random; it's calculated based on several key factors in your credit report:</Text>
         <View style={styles.bulletList}>
@@ -387,7 +401,7 @@ const LESSONS = [
           <Text style={styles.bulletItem}>• <Text style={styles.bold}>New Credit (10%):</Text> Opening too many accounts in a short time is seen as risky.</Text>
           <Text style={styles.bulletItem}>• <Text style={styles.bold}>Credit Mix (10%):</Text> Having different types of credit (like a credit card and a car loan).</Text>
         </View>
-        
+
         <Text style={styles.h2}>Why Your Score Matters</Text>
         <Text style={styles.paragraph}>A high credit score (usually 740+) can save you thousands of dollars over your lifetime by qualifying you for lower interest rates on mortgages, car loans, and credit cards. It can even affect your ability to rent an apartment or get certain jobs.</Text>
       </>
@@ -401,6 +415,19 @@ export default function LearnScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedLesson, setSelectedLesson] = useState<LessonType | null>(null);
+  const { completeLesson, completedLessons } = useProgressStore();
+
+  const handleFinishLesson = () => {
+    if (!selectedLesson) return;
+    const isNew = completeLesson(selectedLesson.id);
+    if (isNew) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('🎉 Lesson Complete!', '+50 XP earned! Keep going!');
+    } else {
+      Alert.alert('✅ Already Completed', 'You\'ve already mastered this lesson.');
+    }
+    setSelectedLesson(null);
+  };
 
   // Handle hardware back button generically for android mostly
   React.useEffect(() => {
@@ -420,15 +447,15 @@ export default function LearnScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.readerHeader}>
-          <TouchableOpacity 
-            style={styles.backButton} 
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => setSelectedLesson(null)}
           >
             <ArrowLeft size={24} color="#e2e8f0" />
             <Text style={styles.backButtonText}>Back to Library</Text>
           </TouchableOpacity>
         </View>
-        
+
         <ScrollView contentContainerStyle={styles.readerContent}>
           <View style={styles.readerHero}>
             <View style={[styles.largeIconContainer, { backgroundColor: selectedLesson.bgColor }]}>
@@ -442,14 +469,22 @@ export default function LearnScreen() {
               </View>
             </View>
             <Text style={styles.readerTitle}>{selectedLesson.title}</Text>
+            {selectedLesson.image && (
+              <Image source={selectedLesson.image} style={styles.bannerImage} resizeMode="cover" />
+            )}
           </View>
 
           <View style={styles.articleBody}>
             {selectedLesson.content}
           </View>
 
-          <TouchableOpacity style={[styles.completeButton, { backgroundColor: selectedLesson.color }]} onPress={() => setSelectedLesson(null)}>
-            <Text style={styles.completeButtonText}>Finish Lesson</Text>
+          <TouchableOpacity style={[styles.completeButton, { backgroundColor: selectedLesson.color }]} onPress={handleFinishLesson}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <CheckCircle size={18} color="#ffffff" />
+              <Text style={styles.completeButtonText}>
+                {completedLessons.includes(selectedLesson.id) ? 'Completed ✓' : 'Finish Lesson (+50 XP)'}
+              </Text>
+            </View>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -457,8 +492,8 @@ export default function LearnScreen() {
   }
 
   const filteredLessons = LESSONS.filter(lesson => {
-    const matchesSearch = lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          lesson.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lesson.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeCategory === 'All' || lesson.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
@@ -484,14 +519,14 @@ export default function LearnScreen() {
         </View>
 
         {/* Categories */}
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.categoriesWrapper}
           contentContainerStyle={styles.categoriesContent}
         >
           {CATEGORIES.map(category => (
-            <TouchableOpacity 
+            <TouchableOpacity
               key={category}
               style={[styles.categoryPill, activeCategory === category && styles.categoryPillActive]}
               onPress={() => setActiveCategory(category)}
@@ -506,22 +541,22 @@ export default function LearnScreen() {
         {/* Lessons List */}
         <View style={styles.lessonsList}>
           {filteredLessons.length === 0 ? (
-             <View style={styles.emptyState}>
-               <Text style={styles.emptyStateText}>No lessons found for "{searchQuery}"</Text>
-             </View>
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No lessons found for "{searchQuery}"</Text>
+            </View>
           ) : (
             filteredLessons.map(lesson => {
               const IconComponent = lesson.icon;
               return (
-                <TouchableOpacity 
-                  key={lesson.id} 
+                <TouchableOpacity
+                  key={lesson.id}
                   style={styles.lessonCard}
                   onPress={() => setSelectedLesson(lesson)}
                 >
                   <View style={[styles.iconContainer, { backgroundColor: lesson.bgColor }]}>
                     <IconComponent size={24} color={lesson.color} />
                   </View>
-                  
+
                   <View style={styles.lessonContent}>
                     <View style={styles.lessonMetaHeader}>
                       <Text style={[styles.levelTag, { color: lesson.color }]}>{lesson.level}</Text>
@@ -533,7 +568,7 @@ export default function LearnScreen() {
                     <Text style={styles.lessonTitle}>{lesson.title}</Text>
                     <Text style={styles.lessonDescription} numberOfLines={2}>{lesson.description}</Text>
                   </View>
-                  
+
                   <View style={styles.chevronContainer}>
                     <ChevronRight size={20} color="#475569" />
                   </View>

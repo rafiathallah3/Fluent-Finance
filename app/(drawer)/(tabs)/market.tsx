@@ -1,13 +1,12 @@
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { TrendingUp, TrendingDown, Bitcoin, ChevronRight, Zap, Landmark, Percent, BarChart3, Activity } from 'lucide-react-native';
-import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
-import Animated, { useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { router } from 'expo-router';
-import { useTradingStore } from '../../store/useTradingStore';
-import ContextualTooltip from '../../components/ContextualTooltip';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { Activity, BarChart3, Bitcoin, ChevronRight, Landmark, Percent, TrendingDown, TrendingUp, Zap } from 'lucide-react-native';
+import React, { useRef } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, { useAnimatedStyle, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import ContextualTooltip from '../../../components/ContextualTooltip';
+import { CustomText as Text } from '../../../components/CustomText';
+import { useTradingStore } from '../../../store/useTradingStore';
 
 // ── Watchlist asset config ──────────────────────────────────
 const WATCHLIST_ASSETS = [
@@ -75,22 +74,20 @@ function SentimentGauge({ score }: { score: number }) {
   const bgArcStart = { x: cx + r * Math.cos(startAngle), y: cy - r * Math.sin(startAngle) };
   const bgArcEnd = { x: cx + r * Math.cos(endAngle), y: cy - r * Math.sin(endAngle) };
 
-  // Needle position
+  // End of filled arc position
   const needleAngle = Math.PI - (score / 100) * Math.PI;
-  const needleX = cx + (r - 10) * Math.cos(needleAngle);
-  const needleY = cy - (r - 10) * Math.sin(needleAngle);
+  
+  // Filled arc end coordinates (on the outer radius r = 70)
+  const arcEndX = cx + r * Math.cos(needleAngle);
+  const arcEndY = cy - r * Math.sin(needleAngle);
 
   const label =
     score <= 20 ? 'Extreme Fear' :
-    score <= 40 ? 'Fear' :
-    score <= 60 ? 'Neutral' :
-    score <= 80 ? 'Greedy' : 'Extreme Greed';
+      score <= 40 ? 'Fear' :
+        score <= 60 ? 'Neutral' :
+          score <= 80 ? 'Greedy' : 'Extreme Greed';
 
-  const labelColor =
-    score <= 20 ? '#ef4444' :
-    score <= 40 ? '#f97316' :
-    score <= 60 ? '#eab308' :
-    score <= 80 ? '#22c55e' : '#10b981';
+  const labelColor = '#38bdf8';
 
   // Pulse animation for needle dot
   const pulseStyle = useAnimatedStyle(() => ({
@@ -103,54 +100,47 @@ function SentimentGauge({ score }: { score: number }) {
 
   return (
     <View style={styles.gaugeContainer}>
-      <Svg width={180} height={100} viewBox="0 0 180 100">
-        <Defs>
-          <LinearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#ef4444" />
-            <Stop offset="0.35" stopColor="#f97316" />
-            <Stop offset="0.5" stopColor="#eab308" />
-            <Stop offset="0.7" stopColor="#22c55e" />
-            <Stop offset="1" stopColor="#10b981" />
-          </LinearGradient>
-        </Defs>
-        {/* Background arc */}
-        <Path
-          d={`M ${bgArcStart.x} ${bgArcStart.y} A ${r} ${r} 0 0 1 ${bgArcEnd.x} ${bgArcEnd.y}`}
-          fill="none"
-          stroke="#1e2f47"
-          strokeWidth={12}
-          strokeLinecap="round"
-        />
-        {/* Colored arc */}
-        <Path
-          d={`M ${bgArcStart.x} ${bgArcStart.y} A ${r} ${r} 0 0 1 ${bgArcEnd.x} ${bgArcEnd.y}`}
-          fill="none"
-          stroke="url(#gaugeGrad)"
-          strokeWidth={12}
-          strokeLinecap="round"
-        />
-        {/* Needle line */}
-        <Path
-          d={`M ${cx} ${cy} L ${needleX} ${needleY}`}
-          stroke="#e2e8f0"
-          strokeWidth={2.5}
-          strokeLinecap="round"
-        />
-        {/* Center dot */}
-        <Circle cx={cx} cy={cy} r={5} fill="#e2e8f0" />
-      </Svg>
+      <View style={{ width: 180, height: 100, position: 'relative' }}>
+        <Svg width={180} height={100} viewBox="0 0 180 100">
+          <Defs>
+            <LinearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="0">
+              <Stop offset="0" stopColor="#1d4ed8" />
+              <Stop offset="1" stopColor="#38bdf8" />
+            </LinearGradient>
+          </Defs>
+          {/* Background arc */}
+          <Path
+            d={`M ${bgArcStart.x} ${bgArcStart.y} A ${r} ${r} 0 0 1 ${bgArcEnd.x} ${bgArcEnd.y}`}
+            fill="none"
+            stroke="#1e2f47"
+            strokeWidth={12}
+            strokeLinecap="round"
+          />
+          {/* Colored arc (filled based on sentiment score) */}
+          {score > 0 && (
+            <Path
+              d={`M ${bgArcStart.x} ${bgArcStart.y} A ${r} ${r} 0 0 1 ${arcEndX} ${arcEndY}`}
+              fill="none"
+              stroke="url(#gaugeGrad)"
+              strokeWidth={12}
+              strokeLinecap="round"
+            />
+          )}
+        </Svg>
 
-      {/* Pulsing needle tip */}
-      <Animated.View
-        style={[
-          styles.needleDot,
-          {
-            left: (needleX / 180) * 180 - 5,
-            top: (1 - needleY / 100) * 100 - 5,
-          },
-          pulseStyle,
-        ]}
-      />
+        {/* Pulsing tip indicator */}
+        <Animated.View
+          style={[
+            styles.needleDot,
+            {
+              left: arcEndX - 5,
+              top: arcEndY - 5,
+              backgroundColor: '#38bdf8',
+            },
+            pulseStyle,
+          ]}
+        />
+      </View>
 
       <Text style={[styles.gaugeScore, { color: labelColor }]}>{score}</Text>
       <Text style={[styles.gaugeLabel, { color: labelColor }]}>{label}</Text>
@@ -356,16 +346,14 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 24,
-    paddingTop: 48,
+    paddingTop: 24,
   },
   header: {
     marginBottom: 28,
   },
   title: {
     fontSize: 32,
-    fontWeight: '800',
     color: '#ffffff',
-    fontFamily: 'serif',
     marginBottom: 8,
   },
   subtitle: {
